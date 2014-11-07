@@ -1,6 +1,6 @@
 #version 150
 
-uniform vec4 uLight, uLight2, uColor;
+uniform vec3 uLight, uLight2, uColor;
 
 in vec3 vNormal;
 in vec3 vPosition;

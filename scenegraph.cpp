@@ -1,5 +1,4 @@
 #include <algorithm>
-#include <cassert>
 
 #include "scenegraph.h"
 
@@ -69,9 +68,6 @@ RigTForm getPathAccumRbt(
   shared_ptr<SgTransformNode> source,
   shared_ptr<SgTransformNode> destination,
   int offsetFromDestination) {
-
-  assert(source);
-  assert(destination);
 
   RbtAccumVisitor accum(*destination);
   source->accept(accum);
