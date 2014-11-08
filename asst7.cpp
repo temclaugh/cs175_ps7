@@ -387,7 +387,13 @@ static void initCubeMesh() {
   g_cubeGeometryPN.reset(new SimpleGeometryPN());
   vector<VertexPN> verts;
   for (int i = 0; i < numVertices; ++i) {
-    verts.push_back(VertexPN(cubeMesh.getVertex(i).getPosition(), cubeMesh.getVertex(i).getNormal()));
+    verts.push_back(VertexPN(cubeMesh.getVertex(i).getPosition(), Cvec3(0, 1, 0)));
+    if (i == 2 || i == 6) {
+      verts.push_back(VertexPN(cubeMesh.getVertex(i).getPosition(), Cvec3(0, 1, 0)));
+    }
+    if (i == 3 || i == 7) {
+      verts.push_back(VertexPN(cubeMesh.getVertex(i - 3).getPosition(), Cvec3(0, 1, 0)));
+    }
   }
 
   g_cubeGeometryPN->upload((VertexPN *)&verts, numVertices);
