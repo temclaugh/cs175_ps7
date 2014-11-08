@@ -383,16 +383,14 @@ static void initCubeMesh() {
   // NOTE: This isn't correct, but it typechecks.
   // Per the spec, we need to turn each quad in cubeMesh into
   // two triangles before putting it into the SimpleGeometryPN
-  cout << cubeMesh.getNumVertices() << endl;
-
+  int numVertices = cubeMesh.getNumVertices();
   g_cubeGeometryPN.reset(new SimpleGeometryPN());
-  VertexPN* verts = (VertexPN*) malloc(cubeMesh.getNumVertices() * sizeof(VertexPN));
-
-  for (int i = 0; i < cubeMesh.getNumVertices(); ++i) {
-    verts[i] = VertexPN(cubeMesh.getVertex(i).getPosition(), cubeMesh.getVertex(i).getNormal());
+  vector<VertexPN> verts;
+  for (int i = 0; i < numVertices; ++i) {
+    verts.push_back(VertexPN(cubeMesh.getVertex(i).getPosition(), cubeMesh.getVertex(i).getNormal()));
   }
 
-  g_cubeGeometryPN->upload(verts, cubeMesh.getNumVertices());
+  g_cubeGeometryPN->upload((VertexPN *)&verts, numVertices);
 }
 
 static void initCubes() {
