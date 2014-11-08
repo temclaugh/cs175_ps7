@@ -27,7 +27,6 @@
 #endif
 
 #include "ppm.h"
-#include "mesh.h"
 #include "cvec.h"
 #include "matrix4.h"
 #include "rigtform.h"
@@ -41,6 +40,7 @@
 #include "picker.h"
 #include "sgutils.h"
 #include "geometry.h"
+#include "mesh.h"
 
 using namespace std;
 using namespace tr1;
@@ -380,7 +380,19 @@ static void initGround() {
 static void initCubeMesh() {
   Mesh cubeMesh;
   cubeMesh.load("./cube.mesh");
+  // NOTE: This isn't correct, but it typechecks.
+  // Per the spec, we need to turn each quad in cubeMesh into
+  // two triangles before putting it into the SimpleGeometryPN
+  cout << cubeMesh.getNumVertices() << endl;
+
   g_cubeGeometryPN.reset(new SimpleGeometryPN());
+  VertexPN* verts = (VertexPN*) malloc(cubeMesh.getNumVertices() * sizeof(VertexPN));
+
+  for (int i = 0; i < cubeMesh.getNumVertices(); ++i) {
+    verts[i] = VertexPN(cubeMesh.getVertex(i).getPosition(), cubeMesh.getVertex(i).getNormal());
+  }
+
+  g_cubeGeometryPN->upload(verts, cubeMesh.getNumVertices());
 }
 
 static void initCubes() {
