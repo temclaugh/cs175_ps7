@@ -880,7 +880,7 @@ static void initMaterials() {
   // Create some prototype materials
   Material diffuse("./shaders/basic-gl3.vshader", "./shaders/diffuse-gl3.fshader");
   Material solid("./shaders/basic-gl3.vshader", "./shaders/solid-gl3.fshader");
-  Material specular("./shaders/specular-gl3.vshader", "./shaders/specular-gl3.fshader");
+  Material specular("./shaders/basic-gl3.vshader", "./shaders/specular-gl3.fshader");
 
   // add specular material
   g_specular.reset(new Material(specular));
