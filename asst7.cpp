@@ -27,6 +27,7 @@
 #endif
 
 #include "ppm.h"
+#include "mesh.h"
 #include "cvec.h"
 #include "matrix4.h"
 #include "rigtform.h"
@@ -115,6 +116,8 @@ typedef SgGeometryShapeNode MyShapeNode;
 
 // Vertex buffer and index buffer associated with the ground and cube geometry
 static shared_ptr<Geometry> g_ground, g_cube, g_sphere;
+
+static shared_ptr<SimpleGeometryPN> g_cubeGeometryPN;
 
 // --------- Scene
 
@@ -372,6 +375,12 @@ static void initGround() {
 
   makePlane(g_groundSize*2, vtx.begin(), idx.begin());
   g_ground.reset(new SimpleIndexedGeometryPNTBX(&vtx[0], &idx[0], vbLen, ibLen));
+}
+
+static void initCubeMesh() {
+  Mesh cubeMesh;
+  cubeMesh.load("./cube.mesh");
+  g_cubeGeometryPN.reset(new SimpleGeometryPN());
 }
 
 static void initCubes() {
@@ -884,6 +893,7 @@ static void initMaterials() {
 
   // add specular material
   g_specular.reset(new Material(specular));
+  // make it green yo
   g_specular->getUniforms().put("uColor", Cvec3f(0,1,0));
 
   // copy diffuse prototype and set red color
@@ -918,6 +928,7 @@ static void initGeometry() {
   initCubes();
   initSphere();
   initRobots();
+  initCubeMesh();
 }
 
 static void constructRobot(shared_ptr<SgTransformNode> base, shared_ptr<Material> material) {
