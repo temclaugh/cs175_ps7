@@ -101,7 +101,8 @@ static shared_ptr<Material> g_redDiffuseMat,
                             g_bumpFloorMat,
                             g_arcballMat,
                             g_pickingMat,
-                            g_lightMat;
+                            g_lightMat,
+                            g_specular;
 
 shared_ptr<Material> g_overridingMaterial;
 
@@ -879,6 +880,11 @@ static void initMaterials() {
   // Create some prototype materials
   Material diffuse("./shaders/basic-gl3.vshader", "./shaders/diffuse-gl3.fshader");
   Material solid("./shaders/basic-gl3.vshader", "./shaders/solid-gl3.fshader");
+  Material specular("./shaders/specular-gl3.vshader", "./shaders/specular-gl3.fshader");
+
+  // add specular material
+  g_specular.reset(new Material(specular));
+  g_specular->getUniforms().put("uColor", Cvec3f(0,1,0));
 
   // copy diffuse prototype and set red color
   g_redDiffuseMat.reset(new Material(diffuse));

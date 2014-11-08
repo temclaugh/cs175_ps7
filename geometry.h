@@ -469,8 +469,6 @@ private:
   }
 };
 
-
-
 typedef SimpleUnindexedGeometry<VertexPN> SimpleGeometryPN;
 typedef SimpleUnindexedGeometry<VertexPNX> SimpleGeometryPNX;
 typedef SimpleUnindexedGeometry<VertexPNTBX> SimpleGeometryPNTBX;
