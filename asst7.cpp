@@ -84,6 +84,7 @@ static int g_windowHeight = 512;
 static bool g_mouseClickDown = false;    // is the mouse button pressed
 static bool g_mouseLClickButton, g_mouseRClickButton, g_mouseMClickButton;
 static bool g_spaceDown = false;         // space state, for middle mouse emulation
+static bool g_flat = false;              // smooth vs flat shading
 static int g_mouseClickX, g_mouseClickY; // coordinates for mouse click event
 static int g_activeShader = 0;
 
@@ -126,7 +127,7 @@ static const Cvec3 g_light1(2.0, 3.0, 14.0), g_light2(-2, 3.0, -14.0);  // defin
 static shared_ptr<SgTransformNode> g_light1Node, g_light2Node;
 
 static shared_ptr<SgRootNode> g_world;
-static shared_ptr<SgRbtNode> g_skyNode, g_groundNode, g_mesh_cube;//, g_robot1Node, g_robot2Node;
+static shared_ptr<SgRbtNode> g_skyNode, g_groundNode, g_mesh_cube, g_robot1Node, g_robot2Node;
 
 static shared_ptr<SgRbtNode> g_currentCameraNode;
 static shared_ptr<SgRbtNode> g_currentPickedRbtNode;
@@ -383,9 +384,41 @@ static void initCubeMesh() {
 
   // set normals
   int numVertices = cubeMesh.getNumVertices();
-  Cvec3 normal = Cvec3(0, 1, 0);
-  for (int i = 0; i < numVertices; ++i) {
-    cubeMesh.getVertex(i).setNormal(normal);
+  if (g_flat) {
+    Cvec3 normal = Cvec3(0, 1, 0);
+    for (int i = 0; i < numVertices; ++i) {
+      cubeMesh.getVertex(i).setNormal(normal);
+    }
+  }
+  else {
+    // Smoove shading
+    Cvec3 normal = Cvec3(0, 0, 0);
+    for (int i = 0; i < numVertices; ++i) {
+      cubeMesh.getVertex(i).setNormal(normal);
+    }
+
+    for (int i = 0; i < cubeMesh.getNumFaces(); ++i) {
+      const Mesh::Face f = cubeMesh.getFace(i);
+      Cvec3 facenorm = f.getNormal();
+
+      for (int j = 0; j < f.getNumVertices(); ++j) {
+          const Mesh::Vertex v = f.getVertex(j);
+          v.setNormal(facenorm + v.getNormal());
+        }
+
+    }
+
+    for (int i = 0; i < numVertices; ++i) {
+      const Mesh::Vertex v = cubeMesh.getVertex(i);
+      Cvec3 vertexnorm = v.getNormal();
+
+      if (norm2(vertexnorm) < .001) {
+        continue;
+      }
+      v.setNormal(normalize(vertexnorm));
+
+    }
+
   }
 
   // collect vertices from each face and map quads to triangles
@@ -829,17 +862,17 @@ static void keyboard(const unsigned char key, const int x, const int y) {
     break;
   case 'v':
   {
-  /*shared_ptr<SgRbtNode> viewers[] = {g_skyNode, g_robot1Node, g_robot2Node};
+  shared_ptr<SgRbtNode> viewers[] = {g_skyNode, g_robot1Node, g_robot2Node};
     for (int i = 0; i < 3; ++i) {
       if (g_currentCameraNode == viewers[i]) {
         g_currentCameraNode = viewers[(i+1)%3];
         break;
       }
-    }*/
+    }
 
-    shared_ptr<SgRbtNode> viewers[] = {g_skyNode};
+/*    shared_ptr<SgRbtNode> viewers[] = {g_skyNode};
     g_currentCameraNode = viewers[0];
-    break;
+    break;*/
   }
   break;
   case 'p':
@@ -976,7 +1009,7 @@ static void initGeometry() {
   initGround();
   initCubes();
   initSphere();
-  //initRobots();
+  initRobots();
   initCubeMesh();
 }
 
@@ -1062,11 +1095,11 @@ static void initScene() {
   g_groundNode->addChild(shared_ptr<MyShapeNode>(
                            new MyShapeNode(g_ground, g_bumpFloorMat, Cvec3(0, g_groundY, 0))));
 
-  //g_robot1Node.reset(new SgRbtNode(RigTForm(Cvec3(-2, 1, 0))));
-  //g_robot2Node.reset(new SgRbtNode(RigTForm(Cvec3(2, 1, 0))));
+  g_robot1Node.reset(new SgRbtNode(RigTForm(Cvec3(-2, 1, 0))));
+  g_robot2Node.reset(new SgRbtNode(RigTForm(Cvec3(2, 1, 0))));
 
-  //constructRobot(g_robot1Node, g_redDiffuseMat); // a Red robot
-  //constructRobot(g_robot2Node, g_blueDiffuseMat); // a Blue robot
+  constructRobot(g_robot1Node, g_redDiffuseMat); // a Red robot
+  constructRobot(g_robot2Node, g_blueDiffuseMat); // a Blue robot
 
   g_mesh_cube.reset(new SgRbtNode(RigTForm(Cvec3(0, 0, 0))));
   g_mesh_cube->addChild(shared_ptr<MyShapeNode>(
@@ -1074,8 +1107,8 @@ static void initScene() {
 
   g_world->addChild(g_skyNode);
   g_world->addChild(g_groundNode);
-  //g_world->addChild(g_robot1Node);
-  //g_world->addChild(g_robot2Node);
+  g_world->addChild(g_robot1Node);
+  g_world->addChild(g_robot2Node);
   g_world->addChild(g_light1Node);
   g_world->addChild(g_light2Node);
   g_world->addChild(g_mesh_cube);
