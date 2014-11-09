@@ -384,6 +384,7 @@ static void initCubeMesh() {
 
   // set normals
   int numVertices = cubeMesh.getNumVertices();
+
   if (g_flat) {
     Cvec3 normal = Cvec3(0, 1, 0);
     for (int i = 0; i < numVertices; ++i) {
@@ -404,7 +405,7 @@ static void initCubeMesh() {
       for (int j = 0; j < f.getNumVertices(); ++j) {
           const Mesh::Vertex v = f.getVertex(j);
           v.setNormal(facenorm + v.getNormal());
-        }
+      }
 
     }
 
@@ -448,7 +449,8 @@ static void initCubeMesh() {
   for (int i = 0; i < numVertices; ++i) {
     vertices[i] = verts[i];
   }
-  g_cubeGeometryPN.reset(new SimpleGeometryPN());
+  if (!g_cubeGeometryPN)
+    g_cubeGeometryPN.reset(new SimpleGeometryPN());
   g_cubeGeometryPN->upload(vertices, numVertices);
 }
 
@@ -849,8 +851,15 @@ static void keyboard(const unsigned char key, const int x, const int y) {
     writePpmScreenshot(g_windowWidth, g_windowHeight, "out.ppm");
     break;
   case 'f':
-    cout << "Nein!" << endl;
-    break;
+    if (g_flat = !g_flat) {
+      cout << "Flat shading mode." << endl;
+      goto f_breakout;
+    }
+    cout << "Smooth shading mode." << endl;
+
+    f_breakout:
+      initCubeMesh();
+      break;
   case 'v':
   {
   shared_ptr<SgRbtNode> viewers[] = {g_skyNode, g_robot1Node, g_robot2Node};
