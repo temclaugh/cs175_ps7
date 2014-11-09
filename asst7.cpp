@@ -875,10 +875,6 @@ static void keyboard(const unsigned char key, const int x, const int y) {
         break;
       }
     }
-
-/*    shared_ptr<SgRbtNode> viewers[] = {g_skyNode};
-    g_currentCameraNode = viewers[0];
-    break;*/
   }
   break;
   case 'p':
