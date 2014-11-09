@@ -84,6 +84,7 @@ static int g_windowHeight = 512;
 static bool g_mouseClickDown = false;    // is the mouse button pressed
 static bool g_mouseLClickButton, g_mouseRClickButton, g_mouseMClickButton;
 static bool g_spaceDown = false;         // space state, for middle mouse emulation
+static bool g_flat = false;              // smooth vs flat shading
 static int g_mouseClickX, g_mouseClickY; // coordinates for mouse click event
 static int g_activeShader = 0;
 
@@ -383,9 +384,41 @@ static void initCubeMesh() {
 
   // set normals
   int numVertices = cubeMesh.getNumVertices();
-  Cvec3 normal = Cvec3(0, 1, 0);
-  for (int i = 0; i < numVertices; ++i) {
-    cubeMesh.getVertex(i).setNormal(normal);
+  if (g_flat) {
+    Cvec3 normal = Cvec3(0, 1, 0);
+    for (int i = 0; i < numVertices; ++i) {
+      cubeMesh.getVertex(i).setNormal(normal);
+    }
+  }
+  else {
+    // Smoove shading
+    Cvec3 normal = Cvec3(0, 0, 0);
+    for (int i = 0; i < numVertices; ++i) {
+      cubeMesh.getVertex(i).setNormal(normal);
+    }
+
+    for (int i = 0; i < cubeMesh.getNumFaces(); ++i) {
+      const Mesh::Face f = cubeMesh.getFace(i);
+      Cvec3 facenorm = f.getNormal();
+
+      for (int j = 0; j < f.getNumVertices(); ++j) {
+          const Mesh::Vertex v = f.getVertex(j);
+          v.setNormal(facenorm + v.getNormal());
+        }
+
+    }
+
+    for (int i = 0; i < numVertices; ++i) {
+      const Mesh::Vertex v = cubeMesh.getVertex(i);
+      Cvec3 vertexnorm = v.getNormal();
+
+      if (norm2(vertexnorm) < .001) {
+        continue;
+      }
+      v.setNormal(normalize(vertexnorm));
+
+    }
+
   }
 
   // collect vertices from each face
