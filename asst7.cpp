@@ -126,7 +126,7 @@ static const Cvec3 g_light1(2.0, 3.0, 14.0), g_light2(-2, 3.0, -14.0);  // defin
 static shared_ptr<SgTransformNode> g_light1Node, g_light2Node;
 
 static shared_ptr<SgRootNode> g_world;
-static shared_ptr<SgRbtNode> g_skyNode, g_groundNode, g_robot1Node, g_robot2Node;
+static shared_ptr<SgRbtNode> g_skyNode, g_groundNode, g_robot1Node, g_robot2Node, g_mesh_cube;
 
 static shared_ptr<SgRbtNode> g_currentCameraNode;
 static shared_ptr<SgRbtNode> g_currentPickedRbtNode;
@@ -387,16 +387,24 @@ static void initCubeMesh() {
   g_cubeGeometryPN.reset(new SimpleGeometryPN());
   vector<VertexPN> verts;
   for (int i = 0; i < numVertices; ++i) {
-    verts.push_back(VertexPN(cubeMesh.getVertex(i).getPosition(), Cvec3(0, 1, 0)));
+    /* Cvec3 normal = cubeMesh.getVertex(i).getPosition(); */
+    Cvec3 normal = Cvec3(0, 1, 0);
+    cubeMesh.getVertex(i).setNormal(normal);
+    verts.push_back(VertexPN(cubeMesh.getVertex(i).getPosition(), normal));
     if (i == 2 || i == 6) {
-      verts.push_back(VertexPN(cubeMesh.getVertex(i).getPosition(), Cvec3(0, 1, 0)));
+      verts.push_back(VertexPN(cubeMesh.getVertex(i).getPosition(), normal));
     }
     if (i == 3 || i == 7) {
-      verts.push_back(VertexPN(cubeMesh.getVertex(i - 3).getPosition(), Cvec3(0, 1, 0)));
+      /* normal = cubeMesh.getVertex(i - 3).getPosition(); */
+      verts.push_back(VertexPN(cubeMesh.getVertex(i - 3).getPosition(), normal));
     }
   }
 
   g_cubeGeometryPN->upload((VertexPN *)&verts, numVertices);
+  g_mesh_cube.reset(new SgRbtNode());
+  g_mesh_cube->addChild(shared_ptr<MyShapeNode>(
+                           new MyShapeNode(g_cubeGeometryPN, g_specular, Cvec3(0, g_groundY, 0))));
+  g_world->addChild(g_mesh_cube);
 }
 
 static void initCubes() {
