@@ -380,28 +380,26 @@ static void initGround() {
 static void initCubeMesh() {
   Mesh cubeMesh;
   cubeMesh.load("./cube.mesh");
-  // NOTE: This isn't correct, but it typechecks.
-  // Per the spec, we need to turn each quad in cubeMesh into
-  // two triangles before putting it into the SimpleGeometryPN
+
   int numVertices = cubeMesh.getNumVertices();
-  g_cubeGeometryPN.reset(new SimpleGeometryPN());
   vector<VertexPN> verts;
   for (int i = 0; i < numVertices; ++i) {
-    /* Cvec3 normal = cubeMesh.getVertex(i).getPosition(); */
-    Cvec3 normal = Cvec3(0, 1, 0);
+    Cvec3 normal = cubeMesh.getVertex(i).getPosition();
+    /* Cvec3 normal = Cvec3(0, 1, 0); */
     cubeMesh.getVertex(i).setNormal(normal);
     verts.push_back(VertexPN(cubeMesh.getVertex(i).getPosition(), normal));
+
     if (i == 2 || i == 6) {
       verts.push_back(VertexPN(cubeMesh.getVertex(i).getPosition(), normal));
     }
     if (i == 3 || i == 7) {
-      /* normal = cubeMesh.getVertex(i - 3).getPosition(); */
+      normal = cubeMesh.getVertex(i - 3).getPosition();
+      cubeMesh.getVertex(i - 3).setNormal(normal);
       verts.push_back(VertexPN(cubeMesh.getVertex(i - 3).getPosition(), normal));
     }
   }
-
-  g_cubeGeometryPN->upload((VertexPN *)&verts, numVertices);
-
+  g_cubeGeometryPN.reset(new SimpleGeometryPN());
+  g_cubeGeometryPN->upload((VertexPN *)&verts, 12);
 }
 
 static void initCubes() {
