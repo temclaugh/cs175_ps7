@@ -88,6 +88,7 @@ static bool g_flat = false;              // smooth vs flat shading
 static int g_mouseClickX, g_mouseClickY; // coordinates for mouse click event
 static int g_activeShader = 0;
 static Mesh cubeMesh;
+static vector<double> vertex_speeds;
 static bool meshLoaded = false;
 
 static SkyMode g_activeCameraFrame = WORLD_SKY;
@@ -380,8 +381,7 @@ static void initGround() {
   g_ground.reset(new SimpleIndexedGeometryPNTBX(&vtx[0], &idx[0], vbLen, ibLen));
 }
 
-double scale = 1;
-static void initCubeMesh() {
+static void initCubeMesh(double scale) {
   if (!meshLoaded) {
     cubeMesh.load("./cube.mesh");
     meshLoaded = true;
@@ -413,6 +413,11 @@ static void initCubeMesh() {
       }
 
     }
+    if (vertex_speeds.size() == 0) {
+      for (int i = 0; i < numVertices; ++i) {
+        vertex_speeds.push_back((double) rand() / RAND_MAX);
+      }
+    }
 
     for (int i = 0; i < numVertices; ++i) {
       const Mesh::Vertex v = cubeMesh.getVertex(i);
@@ -422,6 +427,13 @@ static void initCubeMesh() {
         continue;
       }
       v.setNormal(normalize(vertexnorm));
+
+      /* void setNewVertexVertex(const Vertex& v, const Cvec3& p); */
+      Cvec3 p = v.getPosition();
+      p[0] *= scale * vertex_speeds[i];
+      p[1] *= scale * vertex_speeds[i];
+      p[2] *= scale * vertex_speeds[i];
+      v.setPosition(p);
 
     }
 
@@ -436,9 +448,6 @@ static void initCubeMesh() {
     for (int j = 0; j < f.getNumVertices(); ++j) {
       const Mesh::Vertex v = f.getVertex(j);
       position = v.getPosition();
-      position[0] *= scale;
-      position[1] *= scale;
-      position[2] *= scale;
       normal = v.getNormal();
       verts.push_back(VertexPN(position, normal));
       if (j == 2) {
@@ -447,9 +456,6 @@ static void initCubeMesh() {
     }
     const Mesh::Vertex v = f.getVertex(0);
     position = v.getPosition();
-    position[0] *= scale;
-    position[1] *= scale;
-    position[2] *= scale;
     normal = v.getNormal();
     verts.push_back(VertexPN(position, normal));
   }
@@ -511,8 +517,8 @@ static void updateFrustFovY() {
 static void animateCube(int ms) {
   float t = (float) ms / (float) g_msBetweenKeyFrames;
 
-  initCubeMesh();
-  scale = 1.1 + .9 * sin((double) ms / 1000);
+  double scale = -1 * (sin((double) ms / 1000) + 1);
+  initCubeMesh(scale);
   glutPostRedisplay();
   glutTimerFunc(1000/g_animateFramesPerSecond,
       animateCube,
@@ -882,7 +888,7 @@ static void keyboard(const unsigned char key, const int x, const int y) {
     cout << "Smooth shading mode." << endl;
 
     f_breakout:
-      initCubeMesh();
+      initCubeMesh(0);
       break;
   case 'v':
   {
@@ -1034,7 +1040,7 @@ static void initGeometry() {
   initCubes();
   initSphere();
   initRobots();
-  initCubeMesh();
+  initCubeMesh(0);
 }
 
 static void constructRobot(shared_ptr<SgTransformNode> base, shared_ptr<Material> material) {
