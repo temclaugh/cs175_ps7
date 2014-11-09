@@ -87,6 +87,8 @@ static bool g_spaceDown = false;         // space state, for middle mouse emulat
 static bool g_flat = false;              // smooth vs flat shading
 static int g_mouseClickX, g_mouseClickY; // coordinates for mouse click event
 static int g_activeShader = 0;
+static Mesh cubeMesh;
+static bool meshLoaded = false;
 
 static SkyMode g_activeCameraFrame = WORLD_SKY;
 
@@ -378,9 +380,13 @@ static void initGround() {
   g_ground.reset(new SimpleIndexedGeometryPNTBX(&vtx[0], &idx[0], vbLen, ibLen));
 }
 
+
+
 static void initCubeMesh() {
-  Mesh cubeMesh;
-  cubeMesh.load("./cube.mesh");
+  if (!meshLoaded) {
+    cubeMesh.load("./cube.mesh");
+    meshLoaded = true;
+  }
 
   // set normals
   int numVertices = cubeMesh.getNumVertices();
