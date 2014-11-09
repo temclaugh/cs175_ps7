@@ -126,7 +126,7 @@ static const Cvec3 g_light1(2.0, 3.0, 14.0), g_light2(-2, 3.0, -14.0);  // defin
 static shared_ptr<SgTransformNode> g_light1Node, g_light2Node;
 
 static shared_ptr<SgRootNode> g_world;
-static shared_ptr<SgRbtNode> g_skyNode, g_groundNode, g_mesh_cube;//, g_robot1Node, g_robot2Node;
+static shared_ptr<SgRbtNode> g_skyNode, g_groundNode, g_mesh_cube, g_robot1Node, g_robot2Node;
 
 static shared_ptr<SgRbtNode> g_currentCameraNode;
 static shared_ptr<SgRbtNode> g_currentPickedRbtNode;
@@ -820,17 +820,17 @@ static void keyboard(const unsigned char key, const int x, const int y) {
     break;
   case 'v':
   {
-  /*shared_ptr<SgRbtNode> viewers[] = {g_skyNode, g_robot1Node, g_robot2Node};
+  shared_ptr<SgRbtNode> viewers[] = {g_skyNode, g_robot1Node, g_robot2Node};
     for (int i = 0; i < 3; ++i) {
       if (g_currentCameraNode == viewers[i]) {
         g_currentCameraNode = viewers[(i+1)%3];
         break;
       }
-    }*/
+    }
 
-    shared_ptr<SgRbtNode> viewers[] = {g_skyNode};
+/*    shared_ptr<SgRbtNode> viewers[] = {g_skyNode};
     g_currentCameraNode = viewers[0];
-    break;
+    break;*/
   }
   break;
   case 'p':
@@ -967,7 +967,7 @@ static void initGeometry() {
   initGround();
   initCubes();
   initSphere();
-  //initRobots();
+  initRobots();
   initCubeMesh();
 }
 
@@ -1053,20 +1053,20 @@ static void initScene() {
   g_groundNode->addChild(shared_ptr<MyShapeNode>(
                            new MyShapeNode(g_ground, g_bumpFloorMat, Cvec3(0, g_groundY, 0))));
 
-  //g_robot1Node.reset(new SgRbtNode(RigTForm(Cvec3(-2, 1, 0))));
-  //g_robot2Node.reset(new SgRbtNode(RigTForm(Cvec3(2, 1, 0))));
+  g_robot1Node.reset(new SgRbtNode(RigTForm(Cvec3(-2, 1, 0))));
+  g_robot2Node.reset(new SgRbtNode(RigTForm(Cvec3(2, 1, 0))));
 
-  //constructRobot(g_robot1Node, g_redDiffuseMat); // a Red robot
-  //constructRobot(g_robot2Node, g_blueDiffuseMat); // a Blue robot
+  constructRobot(g_robot1Node, g_redDiffuseMat); // a Red robot
+  constructRobot(g_robot2Node, g_blueDiffuseMat); // a Blue robot
 
   g_mesh_cube.reset(new SgRbtNode(RigTForm(Cvec3(0, 1, 0))));
   g_mesh_cube->addChild(shared_ptr<MyShapeNode>(
-                           new MyShapeNode(g_cubeGeometryPN, g_specular, Cvec3(0, g_groundY, 0))));
+                           new MyShapeNode(g_cubeGeometryPN, g_specular, Cvec3(0, 0, 0))));
 
   g_world->addChild(g_skyNode);
   g_world->addChild(g_groundNode);
-  //g_world->addChild(g_robot1Node);
-  //g_world->addChild(g_robot2Node);
+  g_world->addChild(g_robot1Node);
+  g_world->addChild(g_robot2Node);
   g_world->addChild(g_light1Node);
   g_world->addChild(g_light2Node);
   g_world->addChild(g_mesh_cube);
