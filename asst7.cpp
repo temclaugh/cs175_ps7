@@ -88,6 +88,7 @@ static bool g_flat = false;              // smooth vs flat shading
 static int g_mouseClickX, g_mouseClickY; // coordinates for mouse click event
 static int g_activeShader = 0;
 static Mesh cubeMesh;
+static vector<double> vertex_speeds;
 static bool meshLoaded = false;
 
 static SkyMode g_activeCameraFrame = WORLD_SKY;
@@ -380,9 +381,7 @@ static void initGround() {
   g_ground.reset(new SimpleIndexedGeometryPNTBX(&vtx[0], &idx[0], vbLen, ibLen));
 }
 
-
-
-static void initCubeMesh() {
+static void initCubeMesh(double scale) {
   if (!meshLoaded) {
     cubeMesh.load("./cube.mesh");
     meshLoaded = true;
@@ -414,6 +413,11 @@ static void initCubeMesh() {
       }
 
     }
+    if (vertex_speeds.size() == 0) {
+      for (int i = 0; i < numVertices; ++i) {
+        vertex_speeds.push_back((double) rand() / RAND_MAX);
+      }
+    }
 
     for (int i = 0; i < numVertices; ++i) {
       const Mesh::Vertex v = cubeMesh.getVertex(i);
@@ -424,11 +428,18 @@ static void initCubeMesh() {
       }
       v.setNormal(normalize(vertexnorm));
 
+      /* void setNewVertexVertex(const Vertex& v, const Cvec3& p); */
+      Cvec3 p = v.getPosition();
+      p[0] *= scale * vertex_speeds[i];
+      p[1] *= scale * vertex_speeds[i];
+      p[2] *= scale * vertex_speeds[i];
+      v.setPosition(p);
+
     }
 
   }
 
-  // collect vertices from each face
+  // collect vertices from each face and map quads to triangles
   vector<VertexPN> verts;
   for (int i = 0; i < cubeMesh.getNumFaces(); ++i) {
     const Mesh::Face f = cubeMesh.getFace(i);
@@ -455,8 +466,9 @@ static void initCubeMesh() {
   for (int i = 0; i < numVertices; ++i) {
     vertices[i] = verts[i];
   }
-  if (!g_cubeGeometryPN)
+  if (!g_cubeGeometryPN) {
     g_cubeGeometryPN.reset(new SimpleGeometryPN());
+  }
   g_cubeGeometryPN->upload(vertices, numVertices);
 }
 
@@ -501,6 +513,18 @@ static void updateFrustFovY() {
     g_frustFovY = atan2(sin(g_frustMinFov * RAD_PER_DEG) * g_windowHeight / g_windowWidth, cos(g_frustMinFov * RAD_PER_DEG)) / RAD_PER_DEG;
   }
 }
+
+static void animateCube(int ms) {
+  float t = (float) ms / (float) g_msBetweenKeyFrames;
+
+  double scale = -1 * (sin((double) ms / 1000) + 1);
+  initCubeMesh(scale);
+  glutPostRedisplay();
+  glutTimerFunc(1000/g_animateFramesPerSecond,
+      animateCube,
+      ms + 1000/g_animateFramesPerSecond);
+}
+
 
 static Cvec3 lerp(Cvec3 src, Cvec3 dest, float alpha) {
   assert(0 <= alpha && alpha <= 1.0);
@@ -864,7 +888,7 @@ static void keyboard(const unsigned char key, const int x, const int y) {
     cout << "Smooth shading mode." << endl;
 
     f_breakout:
-      initCubeMesh();
+      initCubeMesh(0);
       break;
   case 'v':
   {
@@ -1012,7 +1036,7 @@ static void initGeometry() {
   initCubes();
   initSphere();
   initRobots();
-  initCubeMesh();
+  initCubeMesh(0);
 }
 
 static void constructRobot(shared_ptr<SgTransformNode> base, shared_ptr<Material> material) {
@@ -1103,7 +1127,7 @@ static void initScene() {
   constructRobot(g_robot1Node, g_redDiffuseMat); // a Red robot
   constructRobot(g_robot2Node, g_blueDiffuseMat); // a Blue robot
 
-  g_mesh_cube.reset(new SgRbtNode(RigTForm(Cvec3(0, 1, 0))));
+  g_mesh_cube.reset(new SgRbtNode(RigTForm(Cvec3(0, 0, 0))));
   g_mesh_cube->addChild(shared_ptr<MyShapeNode>(
                            new MyShapeNode(g_cubeGeometryPN, g_specular, Cvec3(0, 0, 0))));
 
@@ -1147,6 +1171,7 @@ int main(int argc, char * argv[]) {
     initMaterials();
     initGeometry();
     initScene();
+    animateCube(0);
 
     glutMainLoop();
     return 0;
