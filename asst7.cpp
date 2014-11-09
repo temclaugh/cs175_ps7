@@ -381,30 +381,42 @@ static void initCubeMesh() {
   Mesh cubeMesh;
   cubeMesh.load("./cube.mesh");
 
+  // set normals
   int numVertices = cubeMesh.getNumVertices();
-  vector<VertexPN> verts;
+  Cvec3 normal = Cvec3(0, 1, 0);
   for (int i = 0; i < numVertices; ++i) {
-    /* Cvec3 normal = cubeMesh.getVertex(i).getPosition(); */
-    Cvec3 normal = Cvec3(0, 1, 0);
     cubeMesh.getVertex(i).setNormal(normal);
-    verts.push_back(VertexPN(cubeMesh.getVertex(i).getPosition(), normal));
-
-    if (i == 2 || i == 6) {
-      verts.push_back(VertexPN(cubeMesh.getVertex(i).getPosition(), normal));
-    }
-    if (i == 3 || i == 7) {
-      /* normal = cubeMesh.getVertex(i - 3).getPosition(); */
-      normal = Cvec3(0, 1, 0);
-      verts.push_back(VertexPN(cubeMesh.getVertex(i - 3).getPosition(), normal));
-    }
   }
-  VertexPN *vertices = (VertexPN*) malloc(12 * sizeof(VertexPN));
-  for (int i = 0; i < 12; ++i) {
+
+  // collect vertices from each face
+  vector<VertexPN> verts;
+  for (int i = 0; i < cubeMesh.getNumFaces(); ++i) {
+    const Mesh::Face f = cubeMesh.getFace(i);
+    Cvec3 position;
+    Cvec3 normal;
+    for (int j = 0; j < f.getNumVertices(); ++j) {
+      const Mesh::Vertex v = f.getVertex(j);
+      position = v.getPosition();
+      normal = v.getNormal();
+      verts.push_back(VertexPN(position, normal));
+      if (j == 2) {
+        verts.push_back(VertexPN(position, normal));
+      }
+    }
+    const Mesh::Vertex v = f.getVertex(0);
+    position = v.getPosition();
+    normal = v.getNormal();
+    verts.push_back(VertexPN(position, normal));
+  }
+
+  // add vertices to cube geometry
+  numVertices = verts.size();
+  VertexPN *vertices = (VertexPN *) malloc(numVertices * sizeof(VertexPN));
+  for (int i = 0; i < numVertices; ++i) {
     vertices[i] = verts[i];
   }
   g_cubeGeometryPN.reset(new SimpleGeometryPN());
-  /* g_cubeGeometryPN->upload((VertexPN *)&verts, 12); */
-  g_cubeGeometryPN->upload(vertices, 12);
+  g_cubeGeometryPN->upload(vertices, numVertices);
 }
 
 static void initCubes() {
