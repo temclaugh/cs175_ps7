@@ -388,7 +388,7 @@ static void initCubeMesh() {
     cubeMesh.getVertex(i).setNormal(normal);
   }
 
-  // collect vertices from each face
+  // collect vertices from each face and map quads to triangles
   vector<VertexPN> verts;
   for (int i = 0; i < cubeMesh.getNumFaces(); ++i) {
     const Mesh::Face f = cubeMesh.getFace(i);
@@ -460,6 +460,15 @@ static void updateFrustFovY() {
     g_frustFovY = atan2(sin(g_frustMinFov * RAD_PER_DEG) * g_windowHeight / g_windowWidth, cos(g_frustMinFov * RAD_PER_DEG)) / RAD_PER_DEG;
   }
 }
+
+static void animateCube(int ms) {
+  float t = (float) ms / (float) g_msBetweenKeyFrames;
+
+  glutTimerFunc(1000/g_animateFramesPerSecond,
+      animateCube,
+      ms + 1000/g_animateFramesPerSecond);
+}
+
 
 static Cvec3 lerp(Cvec3 src, Cvec3 dest, float alpha) {
   assert(0 <= alpha && alpha <= 1.0);
@@ -1059,9 +1068,9 @@ static void initScene() {
   //constructRobot(g_robot1Node, g_redDiffuseMat); // a Red robot
   //constructRobot(g_robot2Node, g_blueDiffuseMat); // a Blue robot
 
-  g_mesh_cube.reset(new SgRbtNode(RigTForm(Cvec3(0, 1, 0))));
+  g_mesh_cube.reset(new SgRbtNode(RigTForm(Cvec3(0, 0, 0))));
   g_mesh_cube->addChild(shared_ptr<MyShapeNode>(
-                           new MyShapeNode(g_cubeGeometryPN, g_specular, Cvec3(0, g_groundY, 0))));
+                           new MyShapeNode(g_cubeGeometryPN, g_specular, Cvec3(0, 0, 0))));
 
   g_world->addChild(g_skyNode);
   g_world->addChild(g_groundNode);
@@ -1103,6 +1112,7 @@ int main(int argc, char * argv[]) {
     initMaterials();
     initGeometry();
     initScene();
+    animateCube(0);
 
     glutMainLoop();
     return 0;
