@@ -384,8 +384,8 @@ static void initCubeMesh() {
   int numVertices = cubeMesh.getNumVertices();
   vector<VertexPN> verts;
   for (int i = 0; i < numVertices; ++i) {
-    Cvec3 normal = cubeMesh.getVertex(i).getPosition();
-    /* Cvec3 normal = Cvec3(0, 1, 0); */
+    /* Cvec3 normal = cubeMesh.getVertex(i).getPosition(); */
+    Cvec3 normal = Cvec3(0, 1, 0);
     cubeMesh.getVertex(i).setNormal(normal);
     verts.push_back(VertexPN(cubeMesh.getVertex(i).getPosition(), normal));
 
@@ -393,13 +393,18 @@ static void initCubeMesh() {
       verts.push_back(VertexPN(cubeMesh.getVertex(i).getPosition(), normal));
     }
     if (i == 3 || i == 7) {
-      normal = cubeMesh.getVertex(i - 3).getPosition();
-      cubeMesh.getVertex(i - 3).setNormal(normal);
+      /* normal = cubeMesh.getVertex(i - 3).getPosition(); */
+      normal = Cvec3(0, 1, 0);
       verts.push_back(VertexPN(cubeMesh.getVertex(i - 3).getPosition(), normal));
     }
   }
+  VertexPN *vertices = (VertexPN*) malloc(12 * sizeof(VertexPN));
+  for (int i = 0; i < 12; ++i) {
+    vertices[i] = verts[i];
+  }
   g_cubeGeometryPN.reset(new SimpleGeometryPN());
-  g_cubeGeometryPN->upload((VertexPN *)&verts, 12);
+  /* g_cubeGeometryPN->upload((VertexPN *)&verts, 12); */
+  g_cubeGeometryPN->upload(vertices, 12);
 }
 
 static void initCubes() {
