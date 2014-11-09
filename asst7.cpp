@@ -378,6 +378,7 @@ static void initGround() {
   g_ground.reset(new SimpleIndexedGeometryPNTBX(&vtx[0], &idx[0], vbLen, ibLen));
 }
 
+double scale = 1;
 static void initCubeMesh() {
   Mesh cubeMesh;
   cubeMesh.load("./cube.mesh");
@@ -430,6 +431,9 @@ static void initCubeMesh() {
     for (int j = 0; j < f.getNumVertices(); ++j) {
       const Mesh::Vertex v = f.getVertex(j);
       position = v.getPosition();
+      position[0] *= scale;
+      position[1] *= scale;
+      position[2] *= scale;
       normal = v.getNormal();
       verts.push_back(VertexPN(position, normal));
       if (j == 2) {
@@ -438,6 +442,9 @@ static void initCubeMesh() {
     }
     const Mesh::Vertex v = f.getVertex(0);
     position = v.getPosition();
+    position[0] *= scale;
+    position[1] *= scale;
+    position[2] *= scale;
     normal = v.getNormal();
     verts.push_back(VertexPN(position, normal));
   }
@@ -448,7 +455,9 @@ static void initCubeMesh() {
   for (int i = 0; i < numVertices; ++i) {
     vertices[i] = verts[i];
   }
-  g_cubeGeometryPN.reset(new SimpleGeometryPN());
+  if (!g_cubeGeometryPN) {
+    g_cubeGeometryPN.reset(new SimpleGeometryPN());
+  }
   g_cubeGeometryPN->upload(vertices, numVertices);
 }
 
@@ -497,6 +506,9 @@ static void updateFrustFovY() {
 static void animateCube(int ms) {
   float t = (float) ms / (float) g_msBetweenKeyFrames;
 
+  initCubeMesh();
+  scale = 1.1 + .9 * sin((double) ms / 1000);
+  glutPostRedisplay();
   glutTimerFunc(1000/g_animateFramesPerSecond,
       animateCube,
       ms + 1000/g_animateFramesPerSecond);
