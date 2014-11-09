@@ -401,10 +401,7 @@ static void initCubeMesh() {
   }
 
   g_cubeGeometryPN->upload((VertexPN *)&verts, numVertices);
-  g_mesh_cube.reset(new SgRbtNode());
-  g_mesh_cube->addChild(shared_ptr<MyShapeNode>(
-                           new MyShapeNode(g_cubeGeometryPN, g_specular, Cvec3(0, g_groundY, 0))));
-  g_world->addChild(g_mesh_cube);
+
 }
 
 static void initCubes() {
@@ -1043,12 +1040,17 @@ static void initScene() {
   constructRobot(g_robot1Node, g_redDiffuseMat); // a Red robot
   constructRobot(g_robot2Node, g_blueDiffuseMat); // a Blue robot
 
+  g_mesh_cube.reset(new SgRbtNode(RigTForm(Cvec3(0, 1, 0))));
+  g_mesh_cube->addChild(shared_ptr<MyShapeNode>(
+                           new MyShapeNode(g_cubeGeometryPN, g_specular, Cvec3(0, g_groundY, 0))));
+
   g_world->addChild(g_skyNode);
   g_world->addChild(g_groundNode);
   g_world->addChild(g_robot1Node);
   g_world->addChild(g_robot2Node);
   g_world->addChild(g_light1Node);
   g_world->addChild(g_light2Node);
+  g_world->addChild(g_mesh_cube);
 
   g_light1Node->addChild(shared_ptr<MyShapeNode>(
                            new MyShapeNode(g_sphere, g_lightMat, Cvec3(0,0,0))));
