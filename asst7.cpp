@@ -575,10 +575,13 @@ static void animateCube(int ms) {
   Mesh renderMesh = cubeMesh;
 
   // subdivision
-  collectEdgeVertices(renderMesh);
-  collectFaceVertices(renderMesh);
-  collectVertexVertices(renderMesh);
-  renderMesh.subdivide();
+  for (int i = 0; i < 3; ++i) {
+    collectFaceVertices(renderMesh);
+    collectEdgeVertices(renderMesh);
+    collectVertexVertices(renderMesh);
+    renderMesh.subdivide();
+
+  }
 
   // set normals
   shadeCube(renderMesh);
@@ -664,7 +667,8 @@ void collectVertexVertices(Mesh& m) {
       faces.push_back(m.getNewFaceVertex(it.getFace()));
     }
     while (++it != it0);                                  // go around once the 1ring
-    getVertexVertex(v.getPosition(), vertices, faces);
+    Cvec3 vertex = getVertexVertex(v.getPosition(), vertices, faces);
+    m.setNewVertexVertex(v, vertex);
   }
 }
 
