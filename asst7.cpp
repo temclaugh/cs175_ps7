@@ -458,6 +458,7 @@ static void initCubeMesh() {
   numVertices = verts.size();
   VertexPN *vertices = (VertexPN *) malloc(numVertices * sizeof(VertexPN));
   for (int i = 0; i < numVertices; ++i) {
+    Cvec3f pos = verts[i].p;
     vertices[i] = verts[i];
   }
   if (!g_cubeGeometryPN) {
@@ -532,16 +533,26 @@ static void animateCube(int ms) {
   float t = (float) ms / (float) g_msBetweenKeyFrames;
 
   // scale all vertices in cube
-  vector<VertexPN> verts;
   for (int i = 0; i < cubeMesh.getNumVertices(); ++i) {
     const Mesh::Vertex v = cubeMesh.getVertex(i);
     Cvec3 pos = v.getPosition();
     double factor = (-1 * sin((double) ms / (10000 * vertex_speeds[i] + 10)) + 1) / 2;
+    if (pos[0] > 0 && vertex_signs[i][0] < 0) {
+      printf("SIGN ERROR\n");
+      exit(0);
+    }
+    if (pos[1] > 0 && vertex_signs[i][1] < 0) {
+      printf("SIGN ERROR\n");
+      exit(0);
+    }
+    if (pos[2] > 0 && vertex_signs[i][2] < 0) {
+      printf("SIGN ERROR\n");
+      exit(0);
+    }
     pos[0] = vertex_signs[i][0] * (1 + factor / sqrt(3));
     pos[1] = vertex_signs[i][1] * (1 + factor / sqrt(3));
     pos[2] = vertex_signs[i][2] * (1 + factor / sqrt(3));
     v.setPosition(pos);
-    verts.push_back(VertexPN(v.getPosition(), v.getNormal()));
 
   }
 
@@ -562,6 +573,7 @@ static void animateCube(int ms) {
   }
 
   // collect vertices for each face
+  vector<VertexPN> verts;
   int q = 0;
   for (int i = 0; i < cubeMesh.getNumFaces(); ++i) {
     const Mesh::Face f = cubeMesh.getFace(i);
@@ -586,6 +598,7 @@ static void animateCube(int ms) {
   int numVertices = verts.size();
   VertexPN *vertices = (VertexPN *) malloc(numVertices * sizeof(VertexPN));
   for (int i = 0; i < numVertices; ++i) {
+    Cvec3f pos = verts[i].p;
     vertices[i] = verts[i];
   }
   g_cubeGeometryPN->upload(vertices, numVertices);
