@@ -385,7 +385,7 @@ static Cvec3 getFaceVertex(vector<Cvec3> & verts) {
 }
 
 static Cvec3 getEdgeVertex(vector<Cvec3> & verts) {
-  // pass in two edges, and the two face vertices of the
+  // pass in two vertices on an edge, and the two face vertices of the
   // faces they have in common
   return getFaceVertex(verts);
 }
