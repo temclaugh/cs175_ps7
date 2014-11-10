@@ -419,37 +419,37 @@ static void initGround() {
   g_ground.reset(new SimpleIndexedGeometryPNTBX(&vtx[0], &idx[0], vbLen, ibLen));
 }
 
-static void shadeCube() {
-  int numVertices = cubeMesh.getNumVertices();
+static void shadeCube(Mesh& mesh) {
+  int numVertices = mesh.getNumVertices();
 
   if (g_flat) {
     Cvec3 normal = Cvec3(0, 1, 0);
     for (int i = 0; i < numVertices; ++i) {
-      cubeMesh.getVertex(i).setNormal(normal);
+      mesh.getVertex(i).setNormal(normal);
     }
   }
   else {
     // Smoove shading
     Cvec3 normal = Cvec3(0, 0, 0);
     for (int i = 0; i < numVertices; ++i) {
-      cubeMesh.getVertex(i).setNormal(normal);
+      mesh.getVertex(i).setNormal(normal);
     }
 
-    for (int i = 0; i < cubeMesh.getNumFaces(); ++i) {
-      const Mesh::Face f = cubeMesh.getFace(i);
+    for (int i = 0; i < mesh.getNumFaces(); ++i) {
+      const Mesh::Face f = mesh.getFace(i);
       Cvec3 facenorm = f.getNormal();
 
       for (int j = 0; j < f.getNumVertices(); ++j) {
           const Mesh::Vertex v = f.getVertex(j);
-          v.setNormal(facenorm + v.getNormal());
+          v.setNormal(normalize(facenorm + v.getNormal()));
       }
     }
   }
 }
 
-void collectEdgeVertices(Mesh m);
-void collectFaceVertices(Mesh m);
-void collectVertexVertices(Mesh m);
+void collectEdgeVertices(Mesh& m);
+void collectFaceVertices(Mesh& m);
+void collectVertexVertices(Mesh& m);
 
 static void initCubeMesh() {
   if (!meshLoaded) {
@@ -457,12 +457,8 @@ static void initCubeMesh() {
     meshLoaded = true;
   }
 
-  collectFaceVertices(cubeMesh);
-  collectEdgeVertices(cubeMesh);
-  collectVertexVertices(cubeMesh);
-  cubeMesh.subdivide();
   // set normals
-  shadeCube();
+  shadeCube(cubeMesh);
 
   // collect vertices from each face and map quads to triangles
   vector<VertexPN> verts;
@@ -575,14 +571,23 @@ static void animateCube(int ms) {
 
   }
 
+  // copy mesh to temporary mesh for rendering
+  Mesh renderMesh = cubeMesh;
+
+  // subdivision
+  collectEdgeVertices(renderMesh);
+  collectFaceVertices(renderMesh);
+  collectVertexVertices(renderMesh);
+  renderMesh.subdivide();
+
   // set normals
-  shadeCube();
+  shadeCube(renderMesh);
 
   // collect vertices for each face
   vector<VertexPN> verts;
   int q = 0;
-  for (int i = 0; i < cubeMesh.getNumFaces(); ++i) {
-    const Mesh::Face f = cubeMesh.getFace(i);
+  for (int i = 0; i < renderMesh.getNumFaces(); ++i) {
+    const Mesh::Face f = renderMesh.getFace(i);
     Cvec3 pos;
     Cvec3 normal;
     for (int j = 0; j < f.getNumVertices(); ++j) {
@@ -614,7 +619,7 @@ static void animateCube(int ms) {
       ms + 1000/g_animateFramesPerSecond);
 }
 
-void collectFaceVertices(Mesh m) {
+void collectFaceVertices(Mesh& m) {
   for (int i = 0; i < m.getNumFaces(); ++i) {
     Mesh::Face f = m.getFace(i);
     vector<Cvec3> vertices;
@@ -625,7 +630,7 @@ void collectFaceVertices(Mesh m) {
   }
 }
 
-void collectEdgeVertices(Mesh m) {
+void collectEdgeVertices(Mesh& m) {
   for (int i = 0; i < m.getNumEdges(); ++i) {
     Mesh::Edge e = m.getEdge(i);
 
@@ -647,7 +652,7 @@ void collectEdgeVertices(Mesh m) {
   }
 }
 
-void collectVertexVertices(Mesh m) {
+void collectVertexVertices(Mesh& m) {
   vector<vector<Cvec3> > vertexVertices;
   for (int i = 0; i < m.getNumVertices(); ++i) {
     const Mesh::Vertex v = m.getVertex(i);
