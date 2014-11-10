@@ -447,12 +447,20 @@ static void shadeCube() {
   }
 }
 
+void collectEdgeVertices(Mesh m);
+void collectFaceVertices(Mesh m);
+void collectVertexVertices(Mesh m);
+
 static void initCubeMesh() {
   if (!meshLoaded) {
     cubeMesh.load("./cube.mesh");
     meshLoaded = true;
   }
 
+  collectFaceVertices(cubeMesh);
+  collectEdgeVertices(cubeMesh);
+  collectVertexVertices(cubeMesh);
+  cubeMesh.subdivide();
   // set normals
   shadeCube();
 
@@ -606,49 +614,53 @@ static void animateCube(int ms) {
       ms + 1000/g_animateFramesPerSecond);
 }
 
-static vector<vector<Cvec3> > collectFaceVertices(Mesh m) {
-  vector<vector<Cvec3> > faceVertices;
+void collectFaceVertices(Mesh m) {
   for (int i = 0; i < m.getNumFaces(); ++i) {
     Mesh::Face f = m.getFace(i);
     vector<Cvec3> vertices;
     for (int j = 0; j < f.getNumVertices(); ++j) {
       vertices.push_back(f.getVertex(j).getPosition());
     }
-    faceVertices.push_back(vertices);
+    m.setNewFaceVertex(f, getFaceVertex(vertices));
   }
-  return faceVertices;
 }
 
-static vector<vector<Cvec3> > collectEdgeVertices(Mesh m) {
-  printf("edge vertices:\n");
-  vector<vector<Cvec3> > edgeVertices;
+void collectEdgeVertices(Mesh m) {
   for (int i = 0; i < m.getNumEdges(); ++i) {
     Mesh::Edge e = m.getEdge(i);
+
+    // get faces adjacent to edges
+    Cvec3 f0 = m.getNewFaceVertex(e.getFace(0));
+    Cvec3 f1 = m.getNewFaceVertex(e.getFace(1));
+
+    Cvec3 pos0 = e.getVertex(0).getPosition();
+    Cvec3 pos1 = e.getVertex(1).getPosition();
+
     vector<Cvec3> vertices;
-    for (int j = 0; j < 2; ++j) {
-      Cvec3 pos = e.getVertex(j).getPosition();
-      vertices.push_back(pos);
-      printf("  %.3f %.3f %.3f\n", pos[0], pos[1], pos[2]);
-    }
-    edgeVertices.push_back(vertices);
+    vertices.push_back(f0);
+    vertices.push_back(f1);
+    vertices.push_back(pos0);
+    vertices.push_back(pos1);
+
+    Cvec3 newEdge = getEdgeVertex(vertices);
+    m.setNewEdgeVertex(e, newEdge);
   }
-  printf("\n");
-  return edgeVertices;
 }
 
-static vector<vector<Cvec3> > collectVertexVertices(Mesh m) {
+void collectVertexVertices(Mesh m) {
   vector<vector<Cvec3> > vertexVertices;
   for (int i = 0; i < m.getNumVertices(); ++i) {
     const Mesh::Vertex v = m.getVertex(i);
     Mesh::VertexIterator it(v.getIterator()), it0(it);
     vector<Cvec3> vertices;
+    vector<Cvec3> faces;
     do {
       vertices.push_back(it.getVertex().getPosition());
+      faces.push_back(m.getNewFaceVertex(it.getFace()));
     }
     while (++it != it0);                                  // go around once the 1ring
-    vertexVertices.push_back(vertices);
+    getVertexVertex(v.getPosition(), vertices, faces);
   }
-  return vertexVertices;
 }
 
 
@@ -1298,6 +1310,7 @@ int main(int argc, char * argv[]) {
     initMaterials();
     initGeometry();
     initScene();
+
     animateCube(0);
 
     glutMainLoop();
