@@ -371,6 +371,7 @@ static void animateTimerCallback(int ms) {
 }
 
 static Cvec3 getFaceVertex(vector<Cvec3> & verts) {
+  // pass in the n vertices surrounding a face
   float m_f = (float(1)/verts.size());
   Cvec3 out = Cvec3 (0,0,0);
 
@@ -384,10 +385,14 @@ static Cvec3 getFaceVertex(vector<Cvec3> & verts) {
 }
 
 static Cvec3 getEdgeVertex(vector<Cvec3> & verts) {
+  // pass in two edges, and the two face vertices of the
+  // faces they have in common
   return getFaceVertex(verts);
 }
 
 static Cvec3 getVertexVertex(Cvec3 v, vector<Cvec3> & verts, vector<Cvec3> & faceverts) {
+  // pass in a vertex v, adjacent vertices verts, and
+  // the vertices of all adjacent faces faceverts.
   Cvec3 out = Cvec3(0,0,0);
 
   int n_v = verts.size();
