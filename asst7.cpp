@@ -601,6 +601,47 @@ static void animateCube(int ms) {
       ms + 1000/g_animateFramesPerSecond);
 }
 
+static vector<vector<Cvec3> > collectFaceVertices(Mesh m) {
+  vector<vector<Cvec3> > faceVertices;
+  for (int i = 0; i < m.getNumFaces(); ++i) {
+    Mesh::Face f = m.getFace(i);
+    vector<Cvec3> vertices;
+    for (int j = 0; j < f.getNumVertices(); ++j) {
+      vertices.push_back(f.getVertex(j).getPosition());
+    }
+    faceVertices.push_back(vertices);
+  }
+  return faceVertices;
+}
+
+static vector<vector<Cvec3> > collectEdgeVertices(Mesh m) {
+  vector<vector<Cvec3> > edgeVertices;
+  for (int i = 0; i < m.getNumEdges(); ++i) {
+    Mesh::Edge e = m.getEdge(i);
+    vector<Cvec3> vertices;
+    for (int j = 0; j < 2; ++j) {
+      vertices.push_back(e.getVertex(j).getPosition());
+    }
+    edgeVertices.push_back(vertices);
+  }
+  return edgeVertices;
+}
+
+static vector<vector<Cvec3> > collectVertexVertices(Mesh m) {
+  vector<vector<Cvec3> > vertexVertices;
+  for (int i = 0; i < m.getNumVertices(); ++i) {
+    const Mesh::Vertex v = m.getVertex(i);
+    Mesh::VertexIterator it(v.getIterator()), it0(it);
+    vector<Cvec3> vertices;
+    do {
+      vertices.push_back(it.getVertex().getPosition());
+    }
+    while (++it != it0);                                  // go around once the 1ring
+    vertexVertices.push_back(vertices);
+  }
+  return vertexVertices;
+}
+
 
 static Cvec3 lerp(Cvec3 src, Cvec3 dest, float alpha) {
   assert(0 <= alpha && alpha <= 1.0);
