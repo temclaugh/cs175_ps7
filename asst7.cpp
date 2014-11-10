@@ -522,25 +522,15 @@ static void animateCube(int ms) {
   for (int i = 0; i < cubeMesh.getNumVertices(); ++i) {
     const Mesh::Vertex v = cubeMesh.getVertex(i);
     Cvec3 pos = v.getPosition();
-    double factor = (-1 * sin((double) ms / (10000 * vertex_speeds[i] + 10)) + 1) / 2;
-    if (pos[0] > 0 && vertex_signs[i][0] < 0) {
-      printf("SIGN ERROR\n");
-      exit(0);
-    }
-    if (pos[1] > 0 && vertex_signs[i][1] < 0) {
-      printf("SIGN ERROR\n");
-      exit(0);
-    }
-    if (pos[2] > 0 && vertex_signs[i][2] < 0) {
-      printf("SIGN ERROR\n");
-      exit(0);
-    }
-    pos[0] = vertex_signs[i][0] * (1 + factor / sqrt(3));
-    pos[1] = vertex_signs[i][1] * (1 + factor / sqrt(3));
-    pos[2] = vertex_signs[i][2] * (1 + factor / sqrt(3));
+    double factor = (-1 * sin((double) ms / (1000 * (vertex_speeds[i] + .5))) + 1) / 2 + .5;
+    printf("%.3f ", factor);
+    pos[0] = vertex_signs[i][0] * (factor / sqrt(3));
+    pos[1] = vertex_signs[i][1] * (factor / sqrt(3));
+    pos[2] = vertex_signs[i][2] * (factor / sqrt(3));
     v.setPosition(pos);
 
   }
+  printf("\n");
 
   // set normals
   shadeCube();
