@@ -382,13 +382,7 @@ static void initGround() {
   g_ground.reset(new SimpleIndexedGeometryPNTBX(&vtx[0], &idx[0], vbLen, ibLen));
 }
 
-static void initCubeMesh() {
-  if (!meshLoaded) {
-    cubeMesh.load("./cube.mesh");
-    meshLoaded = true;
-  }
-
-  // set normals
+static void shadeCube() {
   int numVertices = cubeMesh.getNumVertices();
 
   if (g_flat) {
@@ -413,25 +407,17 @@ static void initCubeMesh() {
           v.setNormal(facenorm + v.getNormal());
       }
     }
-    /* for (int i = 0; i < numVertices; ++i) { */
-    /*   const Mesh::Vertex v = cubeMesh.getVertex(i); */
-    /*   Cvec3 vertexnorm = v.getNormal(); */
-
-    /*   if (norm2(vertexnorm) < .001) { */
-    /*     continue; */
-    /*   } */
-    /*   v.setNormal(normalize(vertexnorm)); */
-
-    /*   /1* void setNewVertexVertex(const Vertex& v, const Cvec3& p); *1/ */
-    /*   Cvec3 p = v.getPosition(); */
-    /*   /1* p[0] *= scale * vertex_speeds[i]; *1/ */
-    /*   /1* p[1] *= scale * vertex_speeds[i]; *1/ */
-    /*   /1* p[2] *= scale * vertex_speeds[i]; *1/ */
-    /*   v.setPosition(p); */
-
-    /* } */
-
   }
+}
+
+static void initCubeMesh() {
+  if (!meshLoaded) {
+    cubeMesh.load("./cube.mesh");
+    meshLoaded = true;
+  }
+
+  // set normals
+  shadeCube();
 
   // collect vertices from each face and map quads to triangles
   vector<VertexPN> verts;
@@ -455,7 +441,7 @@ static void initCubeMesh() {
   }
 
   // add vertices to cube geometry
-  numVertices = verts.size();
+  int numVertices = verts.size();
   VertexPN *vertices = (VertexPN *) malloc(numVertices * sizeof(VertexPN));
   for (int i = 0; i < numVertices; ++i) {
     Cvec3f pos = verts[i].p;
@@ -557,20 +543,7 @@ static void animateCube(int ms) {
   }
 
   // set normals
-  Cvec3 normal = Cvec3(0, 0, 0);
-  for (int i = 0; i < cubeMesh.getNumVertices(); ++i) {
-    cubeMesh.getVertex(i).setNormal(normal);
-  }
-
-  for (int i = 0; i < cubeMesh.getNumFaces(); ++i) {
-    const Mesh::Face f = cubeMesh.getFace(i);
-    Cvec3 facenorm = f.getNormal();
-
-    for (int j = 0; j < f.getNumVertices(); ++j) {
-        const Mesh::Vertex v = f.getVertex(j);
-        v.setNormal(facenorm + v.getNormal());
-    }
-  }
+  shadeCube();
 
   // collect vertices for each face
   vector<VertexPN> verts;
