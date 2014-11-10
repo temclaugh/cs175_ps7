@@ -583,15 +583,19 @@ static vector<vector<Cvec3> > collectFaceVertices(Mesh m) {
 }
 
 static vector<vector<Cvec3> > collectEdgeVertices(Mesh m) {
+  printf("edge vertices:\n");
   vector<vector<Cvec3> > edgeVertices;
   for (int i = 0; i < m.getNumEdges(); ++i) {
     Mesh::Edge e = m.getEdge(i);
     vector<Cvec3> vertices;
     for (int j = 0; j < 2; ++j) {
-      vertices.push_back(e.getVertex(j).getPosition());
+      Cvec3 pos = e.getVertex(j).getPosition();
+      vertices.push_back(pos);
+      printf("  %.3f %.3f %.3f\n", pos[0], pos[1], pos[2]);
     }
     edgeVertices.push_back(vertices);
   }
+  printf("\n");
   return edgeVertices;
 }
 
