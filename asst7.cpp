@@ -370,6 +370,38 @@ static void animateTimerCallback(int ms) {
   }
 }
 
+static Cvec3 getFaceVertex(vector<Cvec3> & verts) {
+  float m_f = (float(1)/verts.size());
+  Cvec3 out = Cvec3 (0,0,0);
+
+  for (int i = 0; i < verts.size(); ++i) {
+    out += verts[i];
+  }
+
+  out *= m_f;
+
+  return out;
+}
+
+static Cvec3 getEdgeVertex(vector<Cvec3> & verts) {
+  return getFaceVertex(verts);
+}
+
+static Cvec3 getVertexVertex(Cvec3 v, vector<Cvec3> & verts, vector<Cvec3> & faceverts) {
+  Cvec3 out = Cvec3(0,0,0);
+
+  int n_v = verts.size();
+  out += v * (float(n_v - 2) / n_v);
+
+  Cvec3 out2 = Cvec3(0,0,0);
+
+  for (int i = 0; i < n_v; ++i) {
+    out2 += verts[i] + faceverts[i];
+  }
+
+  return out + (out2 * (float(1)/(n_v * n_v)));
+}
+
 static void initGround() {
   int ibLen, vbLen;
   getPlaneVbIbLen(vbLen, ibLen);
