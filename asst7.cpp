@@ -412,14 +412,7 @@ static void initCubeMesh() {
           const Mesh::Vertex v = f.getVertex(j);
           v.setNormal(facenorm + v.getNormal());
       }
-
     }
-    if (vertex_speeds.size() == 0) {
-      for (int i = 0; i < numVertices; ++i) {
-        vertex_speeds.push_back((double) rand() / RAND_MAX);
-      }
-    }
-
     /* for (int i = 0; i < numVertices; ++i) { */
     /*   const Mesh::Vertex v = cubeMesh.getVertex(i); */
     /*   Cvec3 vertexnorm = v.getNormal(); */
@@ -444,21 +437,21 @@ static void initCubeMesh() {
   vector<VertexPN> verts;
   for (int i = 0; i < cubeMesh.getNumFaces(); ++i) {
     const Mesh::Face f = cubeMesh.getFace(i);
-    Cvec3 position;
+    Cvec3 pos;
     Cvec3 normal;
     for (int j = 0; j < f.getNumVertices(); ++j) {
       const Mesh::Vertex v = f.getVertex(j);
-      position = v.getPosition();
+      pos = v.getPosition();
       normal = v.getNormal();
-      verts.push_back(VertexPN(position, normal));
+      verts.push_back(VertexPN(pos, normal));
       if (j == 2) {
-        verts.push_back(VertexPN(position, normal));
+        verts.push_back(VertexPN(pos, normal));
       }
     }
     const Mesh::Vertex v = f.getVertex(0);
-    position = v.getPosition();
+    pos = v.getPosition();
     normal = v.getNormal();
-    verts.push_back(VertexPN(position, normal));
+    verts.push_back(VertexPN(pos, normal));
   }
 
   // add vertices to cube geometry
@@ -537,45 +530,59 @@ static void updateFrustFovY() {
 
 static void animateCube(int ms) {
   float t = (float) ms / (float) g_msBetweenKeyFrames;
-  double scale = -1 * sin((double) ms / 1000) + 1;
-  /* printf("animating %d, %f\n", ms, scale); */
-
 
   // scale all vertices in cube
   vector<VertexPN> verts;
   for (int i = 0; i < cubeMesh.getNumVertices(); ++i) {
     const Mesh::Vertex v = cubeMesh.getVertex(i);
     Cvec3 pos = v.getPosition();
-    double factor = (-1 * sin((double) ms / (10000 * vertex_speeds[i])) + 1) / 2;
+    double factor = (-1 * sin((double) ms / (10000 * vertex_speeds[i] + 10)) + 1) / 2;
     pos[0] = vertex_signs[i][0] * (1 + factor / sqrt(3));
     pos[1] = vertex_signs[i][1] * (1 + factor / sqrt(3));
     pos[2] = vertex_signs[i][2] * (1 + factor / sqrt(3));
-    printf("%f %f %f\n", pos[0], pos[1], pos[2]);
     v.setPosition(pos);
     verts.push_back(VertexPN(v.getPosition(), v.getNormal()));
 
   }
-  // collect vertices for each face and dump into geometry
+
+  // set normals
+  Cvec3 normal = Cvec3(0, 0, 0);
+  for (int i = 0; i < cubeMesh.getNumVertices(); ++i) {
+    cubeMesh.getVertex(i).setNormal(normal);
+  }
+
+  for (int i = 0; i < cubeMesh.getNumFaces(); ++i) {
+    const Mesh::Face f = cubeMesh.getFace(i);
+    Cvec3 facenorm = f.getNormal();
+
+    for (int j = 0; j < f.getNumVertices(); ++j) {
+        const Mesh::Vertex v = f.getVertex(j);
+        v.setNormal(facenorm + v.getNormal());
+    }
+  }
+
+  // collect vertices for each face
   int q = 0;
   for (int i = 0; i < cubeMesh.getNumFaces(); ++i) {
     const Mesh::Face f = cubeMesh.getFace(i);
-    Cvec3 position;
+    Cvec3 pos;
     Cvec3 normal;
     for (int j = 0; j < f.getNumVertices(); ++j) {
       const Mesh::Vertex v = f.getVertex(j);
-      position = v.getPosition();
+      pos = v.getPosition();
       normal = v.getNormal();
-      verts.push_back(VertexPN(position, normal));
+      verts.push_back(VertexPN(pos, normal));
       if (j == 2) {
-        verts.push_back(VertexPN(position, normal));
+        verts.push_back(VertexPN(pos, normal));
       }
     }
     const Mesh::Vertex v = f.getVertex(0);
-    position = v.getPosition();
+    pos = v.getPosition();
     normal = v.getNormal();
-    verts.push_back(VertexPN(position, normal));
+    verts.push_back(VertexPN(pos, normal));
   }
 
+  // dump into geometry
   int numVertices = verts.size();
   VertexPN *vertices = (VertexPN *) malloc(numVertices * sizeof(VertexPN));
   for (int i = 0; i < numVertices; ++i) {
