@@ -76,9 +76,12 @@ static const float g_frustNear = -0.1;    // near plane
 static const float g_frustFar = -50.0;    // far plane
 static const float g_groundY = -2.0;      // y coordinate of the ground
 static const float g_groundSize = 10.0;   // half the ground length
+static const int g_divcap = 6;
 
 enum SkyMode {WORLD_SKY=0, SKY_SKY=1};
 
+static double g_horiz_scale = 4.0;
+static int g_div_level = 0;
 static int g_windowWidth = 512;
 static int g_windowHeight = 512;
 static bool g_mouseClickDown = false;    // is the mouse button pressed
@@ -420,18 +423,24 @@ static void initGround() {
 }
 
 static void shadeCube(Mesh& mesh) {
-  int numVertices = mesh.getNumVertices();
 
-  if (g_flat) {
+
+/*  if (g_flat) {
     Cvec3 normal = Cvec3(0, 1, 0);
-    for (int i = 0; i < numVertices; ++i) {
-      mesh.getVertex(i).setNormal(normal);
+    for (int i = 0; i < mesh.getNumFaces(); ++i) {
+      const Mesh::Face f = mesh.getFace(i);
+      Cvec3 facenorm = f.getNormal();
+
+      for (int j = 0; j < f.getNumVertices(); ++j) {
+        const Mesh::Vertex v = f.getVertex(j);
+        v.setNormal(facenorm);
+      }
     }
   }
   else {
-    // Smoove shading
+    // Smoove shading*/
     Cvec3 normal = Cvec3(0, 0, 0);
-    for (int i = 0; i < numVertices; ++i) {
+    for (int i = 0; i < mesh.getNumVertices(); ++i) {
       mesh.getVertex(i).setNormal(normal);
     }
 
@@ -440,11 +449,16 @@ static void shadeCube(Mesh& mesh) {
       Cvec3 facenorm = f.getNormal();
 
       for (int j = 0; j < f.getNumVertices(); ++j) {
-          const Mesh::Vertex v = f.getVertex(j);
-          v.setNormal(normalize(facenorm + v.getNormal()));
+        const Mesh::Vertex v = f.getVertex(j);
+        v.setNormal(facenorm + v.getNormal());
       }
     }
-  }
+
+    for (int i = 0; i < mesh.getNumVertices(); ++i) {
+      const Mesh::Vertex v = mesh.getVertex(i);
+      v.setNormal(normalize(v.getNormal()));
+    }
+  //}
 }
 
 void collectEdgeVertices(Mesh& m);
@@ -466,10 +480,17 @@ static void initCubeMesh() {
     const Mesh::Face f = cubeMesh.getFace(i);
     Cvec3 pos;
     Cvec3 normal;
+
+    if (g_flat)
+      normal = f.getNormal();
+
     for (int j = 0; j < f.getNumVertices(); ++j) {
       const Mesh::Vertex v = f.getVertex(j);
       pos = v.getPosition();
-      normal = v.getNormal();
+
+      if (!g_flat)
+        normal = v.getNormal();
+
       verts.push_back(VertexPN(pos, normal));
       if (j == 2) {
         verts.push_back(VertexPN(pos, normal));
@@ -477,7 +498,10 @@ static void initCubeMesh() {
     }
     const Mesh::Vertex v = f.getVertex(0);
     pos = v.getPosition();
-    normal = v.getNormal();
+
+    if (!g_flat)
+      normal = v.getNormal();
+
     verts.push_back(VertexPN(pos, normal));
   }
 
@@ -563,7 +587,7 @@ static void animateCube(int ms) {
   for (int i = 0; i < cubeMesh.getNumVertices(); ++i) {
     const Mesh::Vertex v = cubeMesh.getVertex(i);
     Cvec3 pos = v.getPosition();
-    double factor = (-1 * sin((double) ms / (1000 * (vertex_speeds[i] + .5))) + 1) / 2 + .5;
+    double factor = (1 + (float(g_div_level)/10)) * ((-1 * sin((double) (g_horiz_scale * ms) / (1000 * (vertex_speeds[i] + .5))) + 1) / 2 + .5);
     pos[0] = vertex_signs[i][0] * (factor / sqrt(3));
     pos[1] = vertex_signs[i][1] * (factor / sqrt(3));
     pos[2] = vertex_signs[i][2] * (factor / sqrt(3));
@@ -575,7 +599,7 @@ static void animateCube(int ms) {
   Mesh renderMesh = cubeMesh;
 
   // subdivision
-  for (int i = 0; i < 3; ++i) {
+  for (int i = 0; i < g_div_level; ++i) {
     collectFaceVertices(renderMesh);
     collectEdgeVertices(renderMesh);
     collectVertexVertices(renderMesh);
@@ -596,7 +620,12 @@ static void animateCube(int ms) {
     for (int j = 0; j < f.getNumVertices(); ++j) {
       const Mesh::Vertex v = f.getVertex(j);
       pos = v.getPosition();
-      normal = v.getNormal();
+
+      if (!g_flat)
+        normal = v.getNormal();
+      else
+        normal = f.getNormal();
+
       verts.push_back(VertexPN(pos, normal));
       if (j == 2) {
         verts.push_back(VertexPN(pos, normal));
@@ -604,7 +633,10 @@ static void animateCube(int ms) {
     }
     const Mesh::Vertex v = f.getVertex(0);
     pos = v.getPosition();
-    normal = v.getNormal();
+    if (!g_flat)
+      normal = v.getNormal();
+    else
+      normal = f.getNormal();
     verts.push_back(VertexPN(pos, normal));
   }
 
@@ -1033,10 +1065,33 @@ static void keyboard(const unsigned char key, const int x, const int y) {
       goto f_breakout;
     }
     cout << "Smooth shading mode." << endl;
-
     f_breakout:
       initCubeMesh();
       break;
+  case '7':
+    g_horiz_scale /= 2;
+    cout << "Deforming cube half as fast." << endl;
+    break;
+  case '8':
+    g_horiz_scale *= 2;
+    cout << "Deforming cube twice as fast." << endl;
+    break;
+  case '0':
+    if (g_div_level == g_divcap)
+      cout << "Cannot subdivide further." << endl;
+    else {
+      ++g_div_level;
+      cout << "Increased subdivision level to " << g_div_level << "." << endl;
+    }
+    break;
+  case '9':
+    if (g_div_level == 0)
+      cout << "Cannot decrease subdivision further." << endl;
+    else {
+      --g_div_level;
+      cout << "Decreased subdivision level to " << g_div_level << "." << endl;
+    }
+    break;
   case 'v':
   {
   shared_ptr<SgRbtNode> viewers[] = {g_skyNode, g_robot1Node, g_robot2Node};
@@ -1114,7 +1169,7 @@ static void initGlutState(int argc, char * argv[]) {
   glutInitDisplayMode(GLUT_RGBA|GLUT_DOUBLE|GLUT_DEPTH);  //  RGBA pixel channels and double buffering
 #endif
   glutInitWindowSize(g_windowWidth, g_windowHeight);      // create a window
-  glutCreateWindow("Assignment 4");                       // title the window
+  glutCreateWindow("Assignment 7");                       // title the window
 
   glutIgnoreKeyRepeat(true);                              // avoids repeated keyboard calls when holding space to emulate middle mouse
 
