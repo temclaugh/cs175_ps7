@@ -523,14 +523,12 @@ static void animateCube(int ms) {
     const Mesh::Vertex v = cubeMesh.getVertex(i);
     Cvec3 pos = v.getPosition();
     double factor = (-1 * sin((double) ms / (1000 * (vertex_speeds[i] + .5))) + 1) / 2 + .5;
-    printf("%.3f ", factor);
     pos[0] = vertex_signs[i][0] * (factor / sqrt(3));
     pos[1] = vertex_signs[i][1] * (factor / sqrt(3));
     pos[2] = vertex_signs[i][2] * (factor / sqrt(3));
     v.setPosition(pos);
 
   }
-  printf("\n");
 
   // set normals
   shadeCube();
