@@ -89,6 +89,7 @@ static int g_mouseClickX, g_mouseClickY; // coordinates for mouse click event
 static int g_activeShader = 0;
 static Mesh cubeMesh;
 static vector<double> vertex_speeds;
+static vector<vector<int> > vertex_signs;
 static bool meshLoaded = false;
 
 static SkyMode g_activeCameraFrame = WORLD_SKY;
@@ -381,7 +382,7 @@ static void initGround() {
   g_ground.reset(new SimpleIndexedGeometryPNTBX(&vtx[0], &idx[0], vbLen, ibLen));
 }
 
-static void initCubeMesh(double scale) {
+static void initCubeMesh() {
   if (!meshLoaded) {
     cubeMesh.load("./cube.mesh");
     meshLoaded = true;
@@ -419,23 +420,23 @@ static void initCubeMesh(double scale) {
       }
     }
 
-    for (int i = 0; i < numVertices; ++i) {
-      const Mesh::Vertex v = cubeMesh.getVertex(i);
-      Cvec3 vertexnorm = v.getNormal();
+    /* for (int i = 0; i < numVertices; ++i) { */
+    /*   const Mesh::Vertex v = cubeMesh.getVertex(i); */
+    /*   Cvec3 vertexnorm = v.getNormal(); */
 
-      if (norm2(vertexnorm) < .001) {
-        continue;
-      }
-      v.setNormal(normalize(vertexnorm));
+    /*   if (norm2(vertexnorm) < .001) { */
+    /*     continue; */
+    /*   } */
+    /*   v.setNormal(normalize(vertexnorm)); */
 
-      /* void setNewVertexVertex(const Vertex& v, const Cvec3& p); */
-      Cvec3 p = v.getPosition();
-      p[0] *= scale * vertex_speeds[i];
-      p[1] *= scale * vertex_speeds[i];
-      p[2] *= scale * vertex_speeds[i];
-      v.setPosition(p);
+    /*   /1* void setNewVertexVertex(const Vertex& v, const Cvec3& p); *1/ */
+    /*   Cvec3 p = v.getPosition(); */
+    /*   /1* p[0] *= scale * vertex_speeds[i]; *1/ */
+    /*   /1* p[1] *= scale * vertex_speeds[i]; *1/ */
+    /*   /1* p[2] *= scale * vertex_speeds[i]; *1/ */
+    /*   v.setPosition(p); */
 
-    }
+    /* } */
 
   }
 
@@ -470,6 +471,26 @@ static void initCubeMesh(double scale) {
     g_cubeGeometryPN.reset(new SimpleGeometryPN());
   }
   g_cubeGeometryPN->upload(vertices, numVertices);
+}
+
+static void initCubeAnimation() {
+  // set the speeds of each vertex
+  srand(time(NULL));
+  for (int i = 0; i < cubeMesh.getNumVertices(); ++i) {
+    // create random speed
+    vertex_speeds.push_back((double) rand() / RAND_MAX);
+    Cvec3 pos = cubeMesh.getVertex(i).getPosition();
+
+    // store sign
+    int xSign = (pos[0] < 0) ? -1 : 1;
+    int ySign = (pos[1] < 0) ? -1 : 1;
+    int zSign = (pos[2] < 0) ? -1 : 1;
+    vector<int> signs;
+    signs.push_back(xSign);
+    signs.push_back(ySign);
+    signs.push_back(zSign);
+    vertex_signs.push_back(signs);
+  }
 }
 
 static void initCubes() {
@@ -516,9 +537,51 @@ static void updateFrustFovY() {
 
 static void animateCube(int ms) {
   float t = (float) ms / (float) g_msBetweenKeyFrames;
+  double scale = -1 * sin((double) ms / 1000) + 1;
+  /* printf("animating %d, %f\n", ms, scale); */
 
-  double scale = -1 * (sin((double) ms / 1000) + 1);
-  initCubeMesh(scale);
+
+  // scale all vertices in cube
+  vector<VertexPN> verts;
+  for (int i = 0; i < cubeMesh.getNumVertices(); ++i) {
+    const Mesh::Vertex v = cubeMesh.getVertex(i);
+    Cvec3 pos = v.getPosition();
+    double factor = (-1 * sin((double) ms / (10000 * vertex_speeds[i])) + 1) / 2;
+    pos[0] = vertex_signs[i][0] * (1 + factor / sqrt(3));
+    pos[1] = vertex_signs[i][1] * (1 + factor / sqrt(3));
+    pos[2] = vertex_signs[i][2] * (1 + factor / sqrt(3));
+    printf("%f %f %f\n", pos[0], pos[1], pos[2]);
+    v.setPosition(pos);
+    verts.push_back(VertexPN(v.getPosition(), v.getNormal()));
+
+  }
+  // collect vertices for each face and dump into geometry
+  int q = 0;
+  for (int i = 0; i < cubeMesh.getNumFaces(); ++i) {
+    const Mesh::Face f = cubeMesh.getFace(i);
+    Cvec3 position;
+    Cvec3 normal;
+    for (int j = 0; j < f.getNumVertices(); ++j) {
+      const Mesh::Vertex v = f.getVertex(j);
+      position = v.getPosition();
+      normal = v.getNormal();
+      verts.push_back(VertexPN(position, normal));
+      if (j == 2) {
+        verts.push_back(VertexPN(position, normal));
+      }
+    }
+    const Mesh::Vertex v = f.getVertex(0);
+    position = v.getPosition();
+    normal = v.getNormal();
+    verts.push_back(VertexPN(position, normal));
+  }
+
+  int numVertices = verts.size();
+  VertexPN *vertices = (VertexPN *) malloc(numVertices * sizeof(VertexPN));
+  for (int i = 0; i < numVertices; ++i) {
+    vertices[i] = verts[i];
+  }
+  g_cubeGeometryPN->upload(vertices, numVertices);
   glutPostRedisplay();
   glutTimerFunc(1000/g_animateFramesPerSecond,
       animateCube,
@@ -888,7 +951,7 @@ static void keyboard(const unsigned char key, const int x, const int y) {
     cout << "Smooth shading mode." << endl;
 
     f_breakout:
-      initCubeMesh(0);
+      initCubeMesh();
       break;
   case 'v':
   {
@@ -1040,7 +1103,8 @@ static void initGeometry() {
   initCubes();
   initSphere();
   initRobots();
-  initCubeMesh(0);
+  initCubeMesh();
+  initCubeAnimation();
 }
 
 static void constructRobot(shared_ptr<SgTransformNode> base, shared_ptr<Material> material) {
